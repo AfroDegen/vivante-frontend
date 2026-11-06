@@ -9,83 +9,85 @@ import {
   ShoppingBag,
   Sparkles,
   X,
-} from 'lucide-react'
-import { useState } from 'react'
+} from "lucide-react";
 
-import Cart from './components/cart/Cart'
-import Checkout from './components/checkout/Checkout'
-import { store } from './config/store'
-import type { CartItem } from './lib/checkout/types'
+import { useState } from "react";
 
-type View = 'store' | 'cart' | 'checkout'
+import Cart from "./components/cart/Cart";
+import Checkout from "./components/checkout/Checkout";
+import ProductCatalogue from "./components/products/ProductCatalogue";
+
+import type { CartItem } from "./lib/checkout/types";
+
+type View = "store" | "cart" | "checkout";
 
 const collections = [
   {
-    number: '01',
-    name: 'Period Care',
-    description: 'Thoughtful essentials for every cycle.',
-    price: 'Explore our care collection',
+    number: "01",
+    name: "Period Care",
+    description: "Thoughtful essentials for every cycle.",
+    price: "Explore our care collection",
   },
   {
-    number: '02',
-    name: 'Gift Boxes',
-    description: 'Beautifully curated gifts for someone special.',
-    price: 'Thoughtful gifts, beautifully wrapped',
+    number: "02",
+    name: "Gift Boxes",
+    description: "Beautifully curated gifts for someone special.",
+    price: "Thoughtful gifts, beautifully wrapped",
   },
   {
-    number: '03',
-    name: 'Self-Care',
-    description: 'Little reminders to put yourself first.',
-    price: 'Make time for yourself',
+    number: "03",
+    name: "Self-Care",
+    description: "Little reminders to put yourself first.",
+    price: "Make time for yourself",
   },
-]
-
-const money = (kobo: number) =>
-  new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: 'NGN',
-    maximumFractionDigits: 0,
-  }).format(kobo / 100)
+];
 
 function App() {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [view, setView] = useState<View>('store')
-  const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [view, setView] = useState<View>("store");
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  const closeMenu = () => setMenuOpen(false)
+  const closeMenu = () => setMenuOpen(false);
 
   const cartCount = cartItems.reduce(
     (total, item) => total + item.quantity,
-    0,
-  )
+    0
+  );
 
   function addToCart(productId: string) {
     setCartItems((current) => {
       const existing = current.find(
-        (item) => item.productId === productId,
-      )
+        (item) => item.productId === productId
+      );
 
       if (existing) {
         return current.map((item) =>
           item.productId === productId
             ? { ...item, quantity: item.quantity + 1 }
-            : item,
-        )
+            : item
+        );
       }
 
-      return [...current, { productId, quantity: 1 }]
-    })
+      return [
+        ...current,
+        {
+          productId,
+          quantity: 1,
+        },
+      ];
+    });
 
-    setView('cart')
+    setView("cart");
+    closeMenu();
   }
 
   function updateCart(items: CartItem[]) {
-    setCartItems(items)
+    setCartItems(items);
   }
 
   function goToStore() {
-    setView('store')
-    closeMenu()
+    setView("store");
+    closeMenu();
   }
 
   return (
@@ -95,20 +97,39 @@ function App() {
       </div>
 
       <header className="navbar">
-        <button className="wordmark" onClick={goToStore}>
+        <button
+          type="button"
+          className="wordmark"
+          onClick={goToStore}
+        >
           vivante<span>.</span>
         </button>
 
-        <nav className={menuOpen ? 'nav-links open' : 'nav-links'}>
-          <button onClick={goToStore}>Home</button>
-          <a href="#collections" onClick={closeMenu}>Collections</a>
-          <a href="#story" onClick={closeMenu}>Our Story</a>
-          <a href="#contact" onClick={closeMenu}>Contact</a>
+        <nav className={menuOpen ? "nav-links open" : "nav-links"}>
+          <button type="button" onClick={goToStore}>
+            Home
+          </button>
+
+          <a href="#collections" onClick={closeMenu}>
+            Collections
+          </a>
+
+          <a href="#story" onClick={closeMenu}>
+            Our Story
+          </a>
+
+          <a href="#contact" onClick={closeMenu}>
+            Contact
+          </a>
         </nav>
 
         <button
+          type="button"
           className="nav-cta"
-          onClick={() => setView('cart')}
+          onClick={() => {
+            setView("cart");
+            closeMenu();
+          }}
           aria-label={`Shopping bag, ${cartCount} items`}
         >
           <ShoppingBag size={16} />
@@ -116,6 +137,7 @@ function App() {
         </button>
 
         <button
+          type="button"
           className="menu-toggle"
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle navigation"
@@ -124,12 +146,13 @@ function App() {
         </button>
       </header>
 
-      {view === 'store' && (
+      {view === "store" && (
         <>
           <section className="hero">
             <div className="hero-copy">
               <span className="eyebrow">
-                <Sparkles size={14} /> CARE, CONSIDERED
+                <Sparkles size={14} />
+                CARE, CONSIDERED
               </span>
 
               <h1>
@@ -145,8 +168,10 @@ function App() {
 
               <div className="hero-actions">
                 <a className="primary-button" href="#products">
-                  Discover the collection <ArrowRight size={17} />
+                  Discover the collection
+                  <ArrowRight size={17} />
                 </a>
+
                 <a className="text-link" href="#story">
                   Get to know us
                 </a>
@@ -167,9 +192,11 @@ function App() {
                 <div className="gift-lid">
                   <div className="gift-bow" />
                 </div>
+
                 <div className="gift-body">
                   <span>vivante</span>
                 </div>
+
                 <div className="gift-ribbon" />
               </div>
 
@@ -185,9 +212,20 @@ function App() {
           </section>
 
           <section className="trust-strip">
-            <div><Heart size={18} /> Thoughtfully curated</div>
-            <div><Package size={18} /> Beautifully packaged</div>
-            <div><ShieldCheck size={18} /> Care in every detail</div>
+            <div>
+              <Heart size={18} />
+              Thoughtfully curated
+            </div>
+
+            <div>
+              <Package size={18} />
+              Beautifully packaged
+            </div>
+
+            <div>
+              <ShieldCheck size={18} />
+              Care in every detail
+            </div>
           </section>
 
           <section
@@ -197,8 +235,11 @@ function App() {
             <div className="section-heading">
               <div>
                 <span className="eyebrow">THE VIVANTE EDIT</span>
-                <h2>Care in every <em>form.</em></h2>
+                <h2>
+                  Care in every <em>form.</em>
+                </h2>
               </div>
+
               <p>Find something that feels just right.</p>
             </div>
 
@@ -210,6 +251,7 @@ function App() {
                 >
                   <div className={`collection-art art-${item.number}`}>
                     <span>{item.number}</span>
+
                     <div className="mini-gift">
                       <div className="mini-bow" />
                       <div className="mini-box" />
@@ -228,49 +270,9 @@ function App() {
             </div>
           </section>
 
+          {/* REAL VIVANTE PRODUCT CATALOGUE */}
           <section className="section" id="products">
-            <div className="section-heading">
-              <div>
-                <span className="eyebrow">SHOP VIVANTE</span>
-                <h2>Choose something <em>lovely.</em></h2>
-              </div>
-              <p>Our current demo catalogue.</p>
-            </div>
-
-            <div className="collection-grid">
-              {store.products
-                .filter((product) => product.active)
-                .map((product) => (
-                  <article
-                    className="collection-card product-card"
-                    key={product.id}
-                  >
-                    <div className="collection-art art-02">
-                      <div className="mini-gift">
-                        <div className="mini-bow" />
-                        <div className="mini-box" />
-                      </div>
-                    </div>
-
-                    <div className="collection-info">
-                      <div>
-                        <h3>{product.name}</h3>
-                        <p>{product.description}</p>
-                        <span className="price">
-                          {money(product.priceKobo)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      className="primary-button"
-                      onClick={() => addToCart(product.id)}
-                    >
-                      Add to bag <ShoppingBag size={16} />
-                    </button>
-                  </article>
-                ))}
-            </div>
+            <ProductCatalogue onAddToCart={addToCart} />
           </section>
 
           <section className="story section" id="story">
@@ -283,7 +285,10 @@ function App() {
 
             <div className="story-copy">
               <span className="eyebrow">A NOTE FROM VIVANTE</span>
-              <h2>Because care is not a <em>luxury.</em></h2>
+
+              <h2>
+                Because care is not a <em>luxury.</em>
+              </h2>
 
               <p>
                 We believe the little things matter. A package that
@@ -297,14 +302,18 @@ function App() {
               </p>
 
               <a className="text-link" href="#contact">
-                Say hello <ArrowRight size={16} />
+                Say hello
+                <ArrowRight size={16} />
               </a>
             </div>
           </section>
 
           <section className="custom-cta" id="contact">
             <span className="eyebrow">SOMETHING PERSONAL</span>
-            <h2>A little care goes a <em>long way.</em></h2>
+
+            <h2>
+              A little care goes a <em>long way.</em>
+            </h2>
 
             <p>
               Have a special request or want to create a gift of your
@@ -317,33 +326,41 @@ function App() {
               target="_blank"
               rel="noreferrer"
             >
-              Let's create something <ArrowUpRight size={17} />
+              Let's create something
+              <ArrowUpRight size={17} />
             </a>
           </section>
         </>
       )}
 
-      {view === 'cart' && (
+      {view === "cart" && (
         <section className="section">
-          <button className="text-link" onClick={goToStore}>
-            <ArrowRight size={16} /> Continue shopping
+          <button
+            type="button"
+            className="text-link"
+            onClick={goToStore}
+          >
+            <ArrowRight size={16} />
+            Continue shopping
           </button>
 
           <Cart
             items={cartItems}
             onChange={updateCart}
-            onCheckout={() => setView('checkout')}
+            onCheckout={() => setView("checkout")}
           />
         </section>
       )}
 
-      {view === 'checkout' && (
+      {view === "checkout" && (
         <section className="section">
           <button
+            type="button"
             className="text-link"
-            onClick={() => setView('cart')}
+            onClick={() => setView("cart")}
           >
-            <ArrowRight size={16} /> Back to bag
+            <ArrowRight size={16} />
+            Back to bag
           </button>
 
           <Checkout items={cartItems} />
@@ -351,10 +368,16 @@ function App() {
       )}
 
       <footer className="footer">
-        <button className="wordmark" onClick={goToStore}>
+        <button
+          type="button"
+          className="wordmark"
+          onClick={goToStore}
+        >
           vivante<span>.</span>
         </button>
+
         <p>Thoughtful care, always.</p>
+
         <span>© {new Date().getFullYear()} Vivante Lagos</span>
       </footer>
 
@@ -392,17 +415,6 @@ function App() {
           color: #513768;
         }
 
-        .product-card > .primary-button {
-          width: 100%;
-          border: 0;
-          cursor: pointer;
-          font-family: inherit;
-        }
-
-        .product-card {
-          padding-bottom: 12px;
-        }
-
         .section > .text-link {
           border: 0;
           background: transparent;
@@ -410,7 +422,8 @@ function App() {
           margin-bottom: 24px;
         }
 
-        .cart, .cart-empty {
+        .cart,
+        .cart-empty {
           max-width: 680px;
           margin: 30px auto;
           padding: 24px;
@@ -419,7 +432,9 @@ function App() {
           background: white;
         }
 
-        .cart-header, .cart-item, .cart-subtotal {
+        .cart-header,
+        .cart-item,
+        .cart-subtotal {
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -436,7 +451,8 @@ function App() {
           font-family: 'Bodoni Moda', serif;
         }
 
-        .cart-item p, .cart-delivery-note {
+        .cart-item p,
+        .cart-delivery-note {
           color: #827b85;
           font-size: 13px;
         }
@@ -448,7 +464,8 @@ function App() {
           margin-top: 12px;
         }
 
-        .cart-quantity button, .cart-remove {
+        .cart-quantity button,
+        .cart-remove {
           border: 1px solid #ded5e3;
           background: white;
           color: #513768;
@@ -486,12 +503,17 @@ function App() {
         }
 
         @media (max-width: 560px) {
-          .cart { padding: 16px; }
-          .cart-item { align-items: flex-start; }
+          .cart {
+            padding: 16px;
+          }
+
+          .cart-item {
+            align-items: flex-start;
+          }
         }
       `}</style>
     </main>
-  )
+  );
 }
 
-export default App
+export default App;
