@@ -1,9 +1,4 @@
 
-import type {
-  PaymentMethod,
-  BankTransferDetails,
-} from "../../src/lib/checkout/types";
-
 interface InitiateInput {
   orderId: string;
   amountKobo: number;
@@ -12,12 +7,15 @@ interface InitiateInput {
     email: string;
     phone: string;
   };
-  paymentMethod: PaymentMethod;
+  paymentMethod: "card" | "bank_transfer";
 }
 
-interface InitiateResult {
-  transactionId?: string;
-  transfer?: BankTransferDetails;
+interface BankTransferDetails {
+  accountName: string;
+  accountNumber: string;
+  bankCode: string;
+  amountKobo: number;
+  expiresAt?: string;
 }
 
 interface AlatResponse {
@@ -31,11 +29,7 @@ const BASE_URL =
 
 function requiredEnv(name: string): string {
   const value = process.env[name];
-
-  if (!value) {
-    throw new Error(`${name} is not configured.`);
-  }
-
+  if (!value) throw new Error(`${name} is not configured.`);
   return value;
 }
 
@@ -44,10 +38,6 @@ async function alatRequest(
   method: "GET" | "POST",
   body?: unknown
 ): Promise<AlatResponse> {
-  const subscriptionKey = requiredEnv(
-    "ALATPAY_SUBSCRIPTION_KEY"
-  );
-
   const response = await fetch(
     `${BASE_URL.replace(/\/$/, "")}/${path.replace(/^\//, "")}`,
     {
@@ -55,26 +45,22 @@ async function alatRequest(
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
-        "Ocp-Apim-Subscription-Key": subscriptionKey,
+        "Ocp-Apim-Subscription-Key": requiredEnv(
+          "ALATPAY_SUBSCRIPTION_KEY"
+        ),
       },
-      ...(body !== undefined
-        ? { body: JSON.stringify(body) }
-        : {}),
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     }
   );
 
   const result = await response.json().catch(() => null);
 
   if (!response.ok || !result) {
-    console.error("ALATPay HTTP error:", response.status);
-
-    throw new Error("ALATPay request failed.");
+    throw new Error(`ALATPay request failed (${response.status}).`);
   }
 
   if (result.status === false) {
-    throw new Error(
-      result.message || "ALATPay rejected the request."
-    );
+    throw new Error(result.message || "ALATPay rejected the request.");
   }
 
   return result;
@@ -91,17 +77,17 @@ function splitName(fullName: string) {
 
 export async function initiateProviderPayment(
   input: InitiateInput
-): Promise<InitiateResult> {
+): Promise<{
+  transactionId?: string;
+  transfer?: BankTransferDetails;
+}> {
   if (input.paymentMethod === "card") {
-    // Card checkout is initialized by the hosted browser plugin.
-    // No card data is collected or transmitted by our application.
+    // Card payment uses ALATPay's hosted checkout overlay.
     return {};
   }
 
   const businessId = requiredEnv("ALATPAY_BUSINESS_ID");
-  const { firstName, lastName } = splitName(
-    input.customer.fullName
-  );
+  const { firstName, lastName } = splitName(input.customer.fullName);
 
   const result = await alatRequest(
     "/bank-transfer/api/v1/bankTransfer/virtualAccount",
@@ -117,9 +103,7 @@ export async function initiateProviderPayment(
         phone: input.customer.phone,
         firstName,
         lastName,
-        metadata: JSON.stringify({
-          orderId: input.orderId,
-        }),
+        metadata: JSON.stringify({ orderId: input.orderId }),
       },
     }
   );
@@ -131,24 +115,17 @@ export async function initiateProviderPayment(
     !data?.virtualBankAccountNumber ||
     !data?.virtualBankCode
   ) {
-    throw new Error(
-      "ALATPay did not return complete virtual account details."
-    );
+    throw new Error("ALATPay returned incomplete virtual account details.");
   }
 
   return {
     transactionId: String(data.transactionId),
     transfer: {
-      accountName:
-        data.businessName || "Vivante Lagos",
-      accountNumber: String(
-        data.virtualBankAccountNumber
-      ),
-      bankName: `Bank code ${data.virtualBankCode}`,
+      accountName: data.businessName || "Vivante Lagos",
+      accountNumber: String(data.virtualBankAccountNumber),
+      bankCode: String(data.virtualBankCode),
       amountKobo: input.amountKobo,
-      expiresAt: data.expiredAt
-        ? String(data.expiredAt)
-        : undefined,
+      expiresAt: data.expiredAt ? String(data.expiredAt) : undefined,
     },
   };
 }
@@ -158,55 +135,40 @@ export async function verifyProviderPayment(
   orderId: string,
   expectedAmountKobo: number
 ): Promise<boolean> {
-  if (!transactionId || !orderId) {
-    return false;
-  }
+  if (!transactionId || !orderId) return false;
 
   const businessId = requiredEnv("ALATPAY_BUSINESS_ID");
 
-  const path =
-    "/alatpaytransaction/api/v1/transactions/" +
-    encodeURIComponent(transactionId);
-
-  const result = await alatRequest(path, "GET");
-  const data = result.data;
-
-  if (!data) {
-    return false;
-  }
-
-  const returnedTransactionId = String(
-    data.transactionId ?? data.id ?? ""
+  const result = await alatRequest(
+    `/alatpaytransaction/api/v1/transactions/${encodeURIComponent(transactionId)}`,
+    "GET"
   );
 
+  const data = result.data;
+  if (!data) return false;
+
+  // ALATPay's single-transaction response uses data.id.
+  const returnedTransactionId = String(data.id ?? "");
+  const returnedStatus = String(data.status ?? "")
+    .trim()
+    .toLowerCase();
+
+  // Fail closed if any required verification field is missing.
   const returnedOrderId = String(data.orderId ?? "");
   const returnedBusinessId = String(data.businessId ?? "");
-  const returnedCurrency = String(
-    data.currency ?? ""
-  ).toUpperCase();
+  const returnedCurrency = String(data.currency ?? "").toUpperCase();
 
-  const returnedStatus = String(
-    data.status ?? ""
-  ).trim().toLowerCase();
+  const amount = Number(data.amount);
+  if (!Number.isFinite(amount)) return false;
 
-  const returnedAmountKobo = Math.round(
-    Number(data.amount) * 100
-  );
-
-  const successfulStatuses = [
-    "success",
-    "successful",
-    "completed",
-    "paid",
-  ];
+  const returnedAmountKobo = Math.round(amount * 100);
 
   return (
     returnedTransactionId === transactionId &&
     returnedOrderId === orderId &&
     returnedBusinessId === businessId &&
     returnedCurrency === "NGN" &&
-    successfulStatuses.includes(returnedStatus) &&
-    Number.isFinite(returnedAmountKobo) &&
+    ["success", "successful", "completed", "paid"].includes(returnedStatus) &&
     returnedAmountKobo === expectedAmountKobo
   );
 }
