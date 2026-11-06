@@ -1,0 +1,153 @@
+.checkout {
+  width: min(100% - 32px, 680px);
+  margin: 32px auto;
+  color: #241b2b;
+  font-family: "DM Sans", sans-serif;
+}
+
+.checkout h1,
+.checkout h2 {
+  color: #513768;
+  font-family: "Bodoni Moda", serif;
+}
+
+.checkout h1 {
+  font-size: 2rem;
+  margin: 4px 0 24px;
+}
+
+.checkout h2 {
+  font-size: 1.4rem;
+  margin: 0 0 18px;
+}
+
+.checkout-eyebrow {
+  color: #76518f;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.checkout-section {
+  background: #fff;
+  border: 1px solid #eee5f3;
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 18px;
+}
+
+.checkout label {
+  display: block;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.checkout input:not([type="radio"]),
+.checkout textarea {
+  display: block;
+  width: 100%;
+  margin-top: 7px;
+  padding: 13px;
+  border: 1px solid #d9cde2;
+  border-radius: 9px;
+  background: #fff;
+  color: #241b2b;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.checkout textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.checkout input:focus,
+.checkout textarea:focus {
+  outline: 2px solid #76518f;
+  outline-offset: 2px;
+}
+
+.checkout-summary-line,
+.checkout-total,
+.bank-transfer > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+}
+
+.checkout-total {
+  margin-top: 10px;
+  border-top: 1px solid #eee5f3;
+  color: #513768;
+  font-size: 1.1rem;
+}
+
+.payment-option {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: #faf7fc;
+  border: 1px solid #eee5f3;
+  border-radius: 9px;
+}
+
+.payment-option input {
+  accent-color: #76518f;
+}
+
+.checkout-submit,
+.checkout button {
+  width: 100%;
+  padding: 15px;
+  border: 0;
+  border-radius: 10px;
+  background: #76518f;
+  color: white;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.checkout button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.checkout-error {
+  color: #a32d42;
+  margin: 12px 0;
+}
+
+.payment-provider {
+  padding: 12px;
+  margin-bottom: 16px;
+  background: #eee5f3;
+  border-radius: 9px;
+  color: #513768;
+  font-size: 0.85rem;
+}
+
+.checkout-result {
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 28px;
+  text-align: center;
+  background: #fff;
+  border: 1px solid #eee5f3;
+  border-radius: 14px;
+}
+
+@media (max-width: 480px) {
+  .checkout {
+    width: min(100% - 20px, 680px);
+    margin: 18px auto;
+  }
+
+  .checkout-section {
+    padding: 16px;
+  }
+}
