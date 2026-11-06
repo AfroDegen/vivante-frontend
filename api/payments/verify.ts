@@ -1,20 +1,38 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getOrder, updateOrderPayment } from "../_lib/orders";
-import { verifyProviderPayment } from "../_lib/provider";
+
+import type {
+  VercelRequest,
+  VercelResponse,
+} from "@vercel/node";
+
+import {
+  getOrder,
+  updateOrderPayment,
+} from "../_lib/orders";
+
+import {
+  verifyProviderPayment,
+} from "../_lib/provider";
 
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed." });
+    return res.status(405).json({
+      error: "Method not allowed.",
+    });
   }
 
   try {
-    const { orderId, transactionId } = req.body ?? {};
+    const {
+      orderId,
+      transactionId,
+    } = req.body ?? {};
 
     if (!orderId || !transactionId) {
-      return res.status(400).json({ error: "Missing payment reference." });
+      return res.status(400).json({
+        error: "Missing payment reference.",
+      });
     }
 
     const order = await getOrder(orderId);
@@ -27,17 +45,24 @@ export default async function handler(
       });
     }
 
+    if (order.status !== "pending") {
+      return res.status(400).json({
+        error: "Order is not awaiting payment.",
+      });
+    }
+
     if (
-      order.status !== "pending" ||
+      order.provider_ref &&
       order.provider_ref !== transactionId
     ) {
       return res.status(400).json({
-        error: "Invalid or inactive payment reference.",
+        error: "Transaction reference does not match.",
       });
     }
 
     const verified = await verifyProviderPayment(
-      transactionId,
+      String(transactionId),
+      String(orderId),
       Number(order.total_kobo)
     );
 
@@ -45,11 +70,26 @@ export default async function handler(
       return res.status(200).json({
         orderId,
         status: "pending",
-        message: "Payment has not yet been confirmed.",
+        message:
+          "Payment has not yet been confirmed by ALATPay.",
       });
     }
 
-    await updateOrderPayment(orderId, "paid", transactionId);
+    const updated = await updateOrderPayment(
+      orderId,
+      "paid",
+      transactionId
+    );
+
+    if (!updated) {
+      const latest = await getOrder(orderId);
+
+      if (latest.status !== "paid") {
+        throw new Error(
+          "Order status changed during verification."
+        );
+      }
+    }
 
     return res.status(200).json({
       orderId,
@@ -57,10 +97,14 @@ export default async function handler(
       message: "Payment confirmed.",
     });
   } catch (error) {
-    console.error("Payment verification failed:", error);
+    console.error(
+      "Payment verification failed:",
+      error
+    );
 
     return res.status(500).json({
-      error: "Unable to verify payment right now.",
+      error:
+        "Unable to verify payment right now.",
     });
   }
 }
