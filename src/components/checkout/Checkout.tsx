@@ -1,13 +1,11 @@
+
 import { useState } from "react";
 
 import CustomerForm from "./CustomerForm";
 import OrderSummary from "./OrderSummary";
 import PaymentMethod from "./PaymentMethod";
-import CardPayment from "./CardPayment";
-import BankTransfer from "./BankTransfer";
 import CheckoutSuccess from "./CheckoutSuccess";
 
-import { initiatePayment, verifyPayment } from "../../lib/checkout/api";
 import { validateCheckout } from "../../lib/checkout/validation";
 import { store } from "../../config/store";
 
@@ -15,12 +13,19 @@ import type {
   CartItem,
   CustomerDetails,
   PaymentMethod as Method,
-  InitiatePaymentResponse,
 } from "../../lib/checkout/types";
 
 interface Props {
   items: CartItem[];
 }
+
+interface DemoConfirmation {
+  orderId: string;
+  paymentMethod: Method;
+}
+
+// DEMO MODE: no payment or database request is made.
+const DEMO_MODE = true;
 
 const emptyCustomer: CustomerDetails = {
   fullName: "",
@@ -30,10 +35,20 @@ const emptyCustomer: CustomerDetails = {
   deliveryNote: "",
 };
 
+function createDemoReference() {
+  return (
+    "VIV-DEMO-" +
+    Date.now().toString(36).toUpperCase() +
+    "-" +
+    Math.random().toString(36).slice(2, 7).toUpperCase()
+  );
+}
+
 export default function Checkout({ items }: Props) {
   const [customer, setCustomer] = useState(emptyCustomer);
   const [method, setMethod] = useState<Method>("card");
-  const [payment, setPayment] = useState<InitiatePaymentResponse | null>(null);
+  const [confirmation, setConfirmation] =
+    useState<DemoConfirmation | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -54,95 +69,79 @@ export default function Checkout({ items }: Props) {
     setBusy(true);
 
     try {
-      const result = await initiatePayment({
-        customer,
-        items,
-        paymentMethod: method,
-      });
-
-      setPayment(result);
-
-      if (method === "card" && result.paymentUrl) {
-        window.location.assign(result.paymentUrl);
+      if (DEMO_MODE) {
+        // Deliberately local: no customer data is transmitted.
+        setConfirmation({
+          orderId: createDemoReference(),
+          paymentMethod: method,
+        });
+        return;
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Checkout failed.");
+    } catch {
+      setError("We couldn't complete this demo. Please try again.");
     } finally {
       setBusy(false);
     }
   }
 
-  async function checkPayment() {
-    if (!payment?.order.orderId || !payment.transactionId) return;
-
-    setBusy(true);
-    setError("");
-
-    try {
-      const result = await verifyPayment(
-        payment.order.orderId,
-        payment.transactionId
-      );
-
-      setPayment((previous) =>
-        previous
-          ? {
-              ...previous,
-              status: result.status,
-            }
-          : previous
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Verification failed.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (payment?.status === "paid" || payment?.status === "failed") {
+  if (confirmation) {
     return (
       <CheckoutSuccess
-        orderId={payment.order.orderId}
-        status={payment.status}
+        orderId={confirmation.orderId}
+        paymentMethod={confirmation.paymentMethod}
+        demo
       />
-    );
-  }
-
-  if (payment?.transfer) {
-    return (
-      <div className="checkout">
-        <BankTransfer details={payment.transfer} />
-        <button disabled={busy} onClick={checkPayment}>
-          Check payment status
-        </button>
-        {error && <p role="alert">{error}</p>}
-      </div>
     );
   }
 
   return (
     <main className="checkout">
-      <header>
+      <header className="checkout-header">
         <p className="checkout-eyebrow">{store.name}</p>
         <h1>Complete your order</h1>
+        <p>You're just a few steps away.</p>
       </header>
+
+      {DEMO_MODE && (
+        <div className="demo-notice" role="status">
+          <strong>DEMO CHECKOUT</strong>
+          <span>
+            Explore the customer journey. No payment will be
+            collected and no real order will be submitted.
+          </span>
+        </div>
+      )}
 
       <OrderSummary items={items} />
 
-      <CustomerForm value={customer} onChange={setCustomer} />
+      <CustomerForm
+        value={customer}
+        onChange={setCustomer}
+      />
 
-      <PaymentMethod value={method} onChange={setMethod} />
+      <PaymentMethod
+        value={method}
+        onChange={setMethod}
+      />
 
-      {method === "card" && <CardPayment onReady={() => {}} />}
+      <div className="demo-payment-note">
+        {method === "card"
+          ? "Card checkout will be connected to ALATPay."
+          : "Vivante bank transfer instructions will appear here once configured."}
+      </div>
 
-      {error && <p role="alert" className="checkout-error">{error}</p>}
+      {error && (
+        <p role="alert" className="checkout-error">
+          {error}
+        </p>
+      )}
 
       <button
         className="checkout-submit"
         disabled={busy}
         onClick={submit}
       >
-        {busy ? "Processing…" : "Continue to payment"}
+        {busy ? "Preparing demo..." : "Place demo order"}
       </button>
     </main>
   );
