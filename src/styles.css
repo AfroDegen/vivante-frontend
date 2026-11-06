@@ -923,3 +923,189 @@ h2 em {
     padding: 22px;
   }
 }
+/* VIVANTE PRODUCT CATALOGUE */
+
+.vivante-catalogue {
+  width: 100%;
+}
+
+.catalogue-intro {
+  margin-bottom: 35px;
+}
+
+.catalogue-intro h2 {
+  font-family: 'Bodoni Moda', serif;
+  font-size: clamp(36px, 4vw, 52px);
+  line-height: 1.15;
+  font-weight: 400;
+  letter-spacing: -1.5px;
+  margin: 14px 0;
+}
+
+.catalogue-intro h2 em {
+  color: #926fa9;
+  font-weight: 400;
+}
+
+.catalogue-intro > p {
+  color: #827b85;
+  font-size: 13px;
+  line-height: 1.8;
+  max-width: 480px;
+}
+
+.catalogue-filters {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 5px 0 18px;
+  margin-bottom: 25px;
+  scrollbar-width: thin;
+}
+
+.catalogue-filter {
+  flex: 0 0 auto;
+  border: 1px solid #ded5e3;
+  border-radius: 30px;
+  padding: 11px 17px;
+  background: white;
+  color: #655e68;
+  font-size: 11px;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.catalogue-filter.active {
+  background: #65487a;
+  border-color: #65487a;
+  color: white;
+}
+
+.catalogue-category-heading {
+  margin: 20px 0 25px;
+}
+
+.catalogue-category-heading h3 {
+  font-family: 'Bodoni Moda', serif;
+  font-size: 28px;
+  font-weight: 500;
+  margin: 0 0 8px;
+}
+
+.catalogue-category-heading p {
+  color: #827b85;
+  font-size: 12px;
+}
+
+.catalogue-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 25px;
+}
+
+.catalogue-card {
+  min-width: 0;
+  border: 1px solid #f0ebf1;
+  background: white;
+}
+
+.catalogue-product-art {
+  min-height: 220px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4ede5;
+}
+
+.catalogue-product-art > span {
+  font-family: 'Bodoni Moda', serif;
+  font-size: 75px;
+  color: rgba(101, 72, 122, .28);
+}
+
+.catalogue-product-art small {
+  position: absolute;
+  bottom: 15px;
+  left: 15px;
+  padding: 7px 10px;
+  background: white;
+  color: #76518f;
+  font-size: 9px;
+  letter-spacing: .5px;
+}
+
+.catalogue-product-info {
+  padding: 18px;
+}
+
+.catalogue-product-category {
+  color: #9879aa;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.catalogue-product-info h3 {
+  font-family: 'Bodoni Moda', serif;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.35;
+  margin: 10px 0;
+}
+
+.catalogue-product-info p {
+  min-height: 20px;
+  color: #827b85;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.catalogue-product-footer {
+  margin: 15px 0;
+  color: #65487a;
+  font-size: 13px;
+}
+
+.catalogue-add-button {
+  width: 100%;
+  min-height: 43px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 0;
+  border-radius: 3px;
+  background: #65487a;
+  color: white;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.catalogue-add-button:disabled {
+  background: #eeeaf0;
+  color: #928996;
+  cursor: not-allowed;
+}
+
+@media (max-width: 800px) {
+  .catalogue-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (max-width: 560px) {
+  .catalogue-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .catalogue-product-art {
+    min-height: 240px;
+  }
+
+  .catalogue-product-info {
+    padding: 16px;
+  }
+}
