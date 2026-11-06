@@ -113,7 +113,9 @@ function App() {
             <Heart size={16} fill="currentColor" />
             <span>A gift of care</span>
           </div>
-          <span className="art-caption">A little joy, beautifully wrapped.</span>
+          <span className="art-caption">
+            A little joy, beautifully wrapped.
+          </span>
         </div>
       </section>
 
@@ -142,13 +144,18 @@ function App() {
                   <div className="mini-box" />
                 </div>
               </div>
+
               <div className="collection-info">
                 <div>
                   <h3>{item.name}</h3>
                   <p>{item.description}</p>
                   <span className="price">{item.price}</span>
                 </div>
-                <a href="#contact" aria-label={`Enquire about ${item.name}`}>
+
+                <a
+                  href="#contact"
+                  aria-label={`Enquire about ${item.name}`}
+                >
                   <ArrowUpRight size={20} />
                 </a>
               </div>
@@ -164,18 +171,22 @@ function App() {
             <span>with love</span>
           </div>
         </div>
+
         <div className="story-copy">
           <span className="eyebrow">A NOTE FROM VIVANTE</span>
           <h2>Because care is not a <em>luxury.</em></h2>
+
           <p>
             We believe the little things matter. A package that arrives
             at the right moment. Essentials chosen with intention.
             A gift that says, “I thought of you.”
           </p>
+
           <p>
             Vivante is here to make everyday care feel a little more
             special — one thoughtful box at a time.
           </p>
+
           <a className="text-link" href="#contact">
             Say hello <ArrowRight size={16} />
           </a>
@@ -185,10 +196,12 @@ function App() {
       <section className="custom-cta" id="contact">
         <span className="eyebrow">SOMETHING PERSONAL</span>
         <h2>A little care goes a <em>long way.</em></h2>
+
         <p>
           Have a special request or want to create a gift of your own?
           We'd love to hear from you.
         </p>
+
         <a
           className="primary-button light-button"
           href="https://wa.me/"
@@ -200,7 +213,9 @@ function App() {
       </section>
 
       <footer className="footer">
-        <a className="wordmark" href="#">vivante<span>.</span></a>
+        <a className="wordmark" href="#">
+          vivante<span>.</span>
+        </a>
         <p>Thoughtful care, always.</p>
         <span>© {new Date().getFullYear()} Vivante Lagos</span>
       </footer>
