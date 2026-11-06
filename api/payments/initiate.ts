@@ -1,29 +1,49 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+
+import type {
+  VercelRequest,
+  VercelResponse,
+} from "@vercel/node";
+
 import { createOrder } from "../_lib/orders";
-import { initiateProviderPayment } from "../_lib/provider";
+import {
+  initiateProviderPayment,
+} from "../_lib/provider";
 
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed." });
+    return res.status(405).json({
+      error: "Method not allowed.",
+    });
   }
 
   try {
-    const { customer, items, paymentMethod } = req.body ?? {};
+    const {
+      customer,
+      items,
+      paymentMethod,
+    } = req.body ?? {};
 
     if (
       !customer?.fullName ||
       !customer?.email ||
       !customer?.phone ||
       !customer?.address ||
+      !Array.isArray(items) ||
       !["card", "bank_transfer"].includes(paymentMethod)
     ) {
-      return res.status(400).json({ error: "Invalid checkout details." });
+      return res.status(400).json({
+        error: "Invalid checkout details.",
+      });
     }
 
-    const order = await createOrder(items, customer, paymentMethod);
+    const order = await createOrder(
+      items,
+      customer,
+      paymentMethod
+    );
 
     try {
       const payment = await initiateProviderPayment({
@@ -37,12 +57,21 @@ export default async function handler(
         paymentMethod,
       });
 
-      const { supabase } = await import("../_lib/supabase");
+      if (payment.transactionId) {
+        const { supabase } = await import(
+          "../_lib/supabase"
+        );
 
-      await supabase
-        .from("orders")
-        .update({ provider_ref: payment.transactionId })
-        .eq("id", order.id);
+        const { error } = await supabase
+          .from("orders")
+          .update({
+            provider_ref: payment.transactionId,
+          })
+          .eq("id", order.id)
+          .eq("status", "pending");
+
+        if (error) throw error;
+      }
 
       return res.status(200).json({
         order: {
@@ -55,14 +84,17 @@ export default async function handler(
         paymentMethod,
         status: "pending",
         transactionId: payment.transactionId,
-        paymentUrl: payment.paymentUrl,
         transfer: payment.transfer,
       });
     } catch (error) {
-      console.error("Payment initiation failed:", error);
+      console.error(
+        "Payment initiation failed:",
+        error
+      );
 
       return res.status(502).json({
-        error: "We couldn't start your payment. Please try again.",
+        error:
+          "We couldn't start your payment. Please try again.",
         orderId: order.id,
       });
     }
@@ -70,7 +102,10 @@ export default async function handler(
     console.error("Order creation failed:", error);
 
     return res.status(400).json({
-      error: error instanceof Error ? error.message : "Checkout failed.",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Checkout failed.",
     });
   }
 }
