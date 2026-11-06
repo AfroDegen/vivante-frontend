@@ -1,3 +1,4 @@
+
 import type {
   PaymentMethod,
   BankTransferDetails,
@@ -15,127 +16,197 @@ interface InitiateInput {
 }
 
 interface InitiateResult {
-  transactionId: string;
-  paymentUrl?: string;
+  transactionId?: string;
   transfer?: BankTransferDetails;
 }
 
-const mode = process.env.PAYMENT_MODE ?? "mock";
+interface AlatResponse {
+  status?: boolean;
+  message?: string;
+  data?: Record<string, any>;
+}
 
-async function liveRequest(
+const BASE_URL =
+  process.env.ALATPAY_BASE_URL ?? "https://apibox.alatpay.ng";
+
+function requiredEnv(name: string): string {
+  const value = process.env[name];
+
+  if (!value) {
+    throw new Error(`${name} is not configured.`);
+  }
+
+  return value;
+}
+
+async function alatRequest(
   path: string,
   method: "GET" | "POST",
   body?: unknown
-) {
-  const baseUrl = process.env.ALATPAY_BASE_URL;
-  const apiKey = process.env.ALATPAY_API_KEY;
-  const businessId = process.env.ALATPAY_BUSINESS_ID;
-  const subscriptionKey = process.env.ALATPAY_SUBSCRIPTION_KEY;
-
-  if (!baseUrl || !apiKey || !businessId || !subscriptionKey) {
-    throw new Error("ALATPay credentials are incomplete.");
-  }
+): Promise<AlatResponse> {
+  const subscriptionKey = requiredEnv(
+    "ALATPAY_SUBSCRIPTION_KEY"
+  );
 
   const response = await fetch(
-    `${baseUrl.replace(/\/$/, "")}/${path.replace(/^\//, "")}`,
+    `${BASE_URL.replace(/\/$/, "")}/${path.replace(/^\//, "")}`,
     {
       method,
       headers: {
+        Accept: "application/json",
         "Content-Type": "application/json",
-        Authorization: apiKey,
-        "Business-Id": businessId,
         "Ocp-Apim-Subscription-Key": subscriptionKey,
       },
-      ...(body ? { body: JSON.stringify(body) } : {}),
+      ...(body !== undefined
+        ? { body: JSON.stringify(body) }
+        : {}),
     }
   );
 
-  const result = await response.json();
+  const result = await response.json().catch(() => null);
 
-  if (!response.ok) {
+  if (!response.ok || !result) {
+    console.error("ALATPay HTTP error:", response.status);
+
     throw new Error("ALATPay request failed.");
+  }
+
+  if (result.status === false) {
+    throw new Error(
+      result.message || "ALATPay rejected the request."
+    );
   }
 
   return result;
 }
 
+function splitName(fullName: string) {
+  const parts = fullName.trim().split(/\s+/);
+
+  return {
+    firstName: parts[0] || "Customer",
+    lastName: parts.slice(1).join(" ") || "Vivante",
+  };
+}
+
 export async function initiateProviderPayment(
   input: InitiateInput
 ): Promise<InitiateResult> {
-  if (mode === "mock") {
-    return {
-      transactionId: `MOCK-${input.orderId}`,
-      ...(input.paymentMethod === "bank_transfer"
-        ? {
-            transfer: {
-              accountName: "Vivante Lagos (TEST)",
-              accountNumber: "0000000000",
-              bankName: "ALATPay TEST BANK",
-              amountKobo: input.amountKobo,
-            },
-          }
-        : {
-            paymentUrl: `/api/payments/mock?orderId=${input.orderId}`,
-          }),
-    };
+  if (input.paymentMethod === "card") {
+    // Card checkout is initialized by the hosted browser plugin.
+    // No card data is collected or transmitted by our application.
+    return {};
   }
 
-  const path = process.env.ALATPAY_INITIATE_PATH;
+  const businessId = requiredEnv("ALATPAY_BUSINESS_ID");
+  const { firstName, lastName } = splitName(
+    input.customer.fullName
+  );
 
-  if (!path) {
-    throw new Error("ALATPAY_INITIATE_PATH is not configured.");
-  }
+  const result = await alatRequest(
+    "/bank-transfer/api/v1/bankTransfer/virtualAccount",
+    "POST",
+    {
+      businessId,
+      amount: input.amountKobo / 100,
+      currency: "NGN",
+      orderId: input.orderId,
+      description: "Vivante Lagos order",
+      customer: {
+        email: input.customer.email,
+        phone: input.customer.phone,
+        firstName,
+        lastName,
+        metadata: JSON.stringify({
+          orderId: input.orderId,
+        }),
+      },
+    }
+  );
 
-  // The request mapping must match the confirmed merchant API contract.
-  const result = await liveRequest(path, "POST", {
-    orderId: input.orderId,
-    amount: input.amountKobo / 100,
-    currency: "NGN",
-    customer: input.customer,
-    paymentMethod: input.paymentMethod,
-  });
+  const data = result.data;
 
-  const transactionId = result.transactionId ?? result.data?.transactionId;
-
-  if (!transactionId) {
-    throw new Error("ALATPay returned no transaction reference.");
+  if (
+    !data?.transactionId ||
+    !data?.virtualBankAccountNumber ||
+    !data?.virtualBankCode
+  ) {
+    throw new Error(
+      "ALATPay did not return complete virtual account details."
+    );
   }
 
   return {
-    transactionId,
-    paymentUrl: result.paymentUrl ?? result.data?.paymentUrl,
-    transfer: result.transfer ?? result.data?.transfer,
+    transactionId: String(data.transactionId),
+    transfer: {
+      accountName:
+        data.businessName || "Vivante Lagos",
+      accountNumber: String(
+        data.virtualBankAccountNumber
+      ),
+      bankName: `Bank code ${data.virtualBankCode}`,
+      amountKobo: input.amountKobo,
+      expiresAt: data.expiredAt
+        ? String(data.expiredAt)
+        : undefined,
+    },
   };
 }
 
 export async function verifyProviderPayment(
   transactionId: string,
+  orderId: string,
   expectedAmountKobo: number
 ): Promise<boolean> {
-  if (mode === "mock") {
-    return transactionId.startsWith("MOCK-");
+  if (!transactionId || !orderId) {
+    return false;
   }
 
-  const pathTemplate = process.env.ALATPAY_VERIFY_PATH;
+  const businessId = requiredEnv("ALATPAY_BUSINESS_ID");
 
-  if (!pathTemplate) {
-    throw new Error("ALATPAY_VERIFY_PATH is not configured.");
+  const path =
+    "/alatpaytransaction/api/v1/transactions/" +
+    encodeURIComponent(transactionId);
+
+  const result = await alatRequest(path, "GET");
+  const data = result.data;
+
+  if (!data) {
+    return false;
   }
 
-  const path = pathTemplate.replace(
-    "{transactionId}",
-    encodeURIComponent(transactionId)
+  const returnedTransactionId = String(
+    data.transactionId ?? data.id ?? ""
   );
 
-  const result = await liveRequest(path, "GET");
+  const returnedOrderId = String(data.orderId ?? "");
+  const returnedBusinessId = String(data.businessId ?? "");
+  const returnedCurrency = String(
+    data.currency ?? ""
+  ).toUpperCase();
 
-  const data = result.data ?? result;
+  const returnedStatus = String(
+    data.status ?? ""
+  ).trim().toLowerCase();
 
-  const amount = Number(data.amount);
-  const status = String(data.status ?? "").toLowerCase();
+  const returnedAmountKobo = Math.round(
+    Number(data.amount) * 100
+  );
+
+  const successfulStatuses = [
+    "success",
+    "successful",
+    "completed",
+    "paid",
+  ];
 
   return (
-    ["success", "successful", "completed", "paid"].includes(status) &&
-    Math.round(amount * 100) === expectedAmountKobo
+    returnedTransactionId === transactionId &&
+    returnedOrderId === orderId &&
+    returnedBusinessId === businessId &&
+    returnedCurrency === "NGN" &&
+    successfulStatuses.includes(returnedStatus) &&
+    Number.isFinite(returnedAmountKobo) &&
+    returnedAmountKobo === expectedAmountKobo
   );
 }
