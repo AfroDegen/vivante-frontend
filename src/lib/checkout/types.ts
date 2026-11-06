@@ -1,3 +1,4 @@
+
 export type PaymentMethod = "card" | "bank_transfer";
 
 export interface CartItem {
@@ -32,7 +33,7 @@ export type OrderStatus = "pending" | "paid" | "failed";
 export interface BankTransferDetails {
   accountName: string;
   accountNumber: string;
-  bankName: string;
+  bankCode: string;
   amountKobo: number;
   expiresAt?: string;
 }
