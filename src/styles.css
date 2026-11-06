@@ -694,3 +694,232 @@ h2 em {
     padding: 30px 15px;
   }
 }
+
+/* VIVANTE CHECKOUT */
+
+.checkout {
+  max-width: 720px;
+  margin: 35px auto;
+  padding: 35px;
+  background: #fff;
+  border: 1px solid #eee5f3;
+  border-radius: 14px;
+}
+
+.checkout-header {
+  margin-bottom: 28px;
+}
+
+.checkout-header h1 {
+  font-family: 'Bodoni Moda', serif;
+  font-size: 38px;
+  font-weight: 400;
+  color: #513768;
+  margin: 10px 0;
+}
+
+.checkout-header > p:last-child {
+  color: #827b85;
+  font-size: 13px;
+}
+
+.checkout-eyebrow {
+  color: #8969a0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.demo-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 16px;
+  margin: 20px 0;
+  border: 1px solid #d9c8e4;
+  border-left: 4px solid #76518f;
+  background: #f6f0f8;
+  color: #513768;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.demo-notice strong {
+  letter-spacing: 1.5px;
+  font-size: 10px;
+}
+
+.demo-payment-note {
+  margin: 18px 0;
+  padding: 14px;
+  background: #faf7f3;
+  border-radius: 7px;
+  color: #655e68;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.checkout-section {
+  margin: 24px 0;
+  padding: 20px 0;
+  border-bottom: 1px solid #eee5f3;
+}
+
+.checkout-section h2 {
+  font-family: 'Bodoni Moda', serif;
+  font-size: 24px;
+  font-weight: 500;
+  color: #513768;
+  margin: 0 0 18px;
+}
+
+.checkout-section label {
+  display: block;
+  margin: 15px 0;
+  color: #655e68;
+  font-size: 12px;
+}
+
+.checkout-section input:not([type="radio"]),
+.checkout-section textarea {
+  display: block;
+  width: 100%;
+  margin-top: 7px;
+  padding: 13px;
+  border: 1px solid #ded5e3;
+  border-radius: 6px;
+  background: #fff;
+  color: #29232e;
+  font: inherit;
+  font-size: 14px;
+}
+
+.checkout-section input:focus,
+.checkout-section textarea:focus {
+  outline: 2px solid #c7afd5;
+  border-color: #76518f;
+}
+
+.checkout-section textarea {
+  min-height: 85px;
+  resize: vertical;
+}
+
+.payment-option {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  padding: 13px;
+  border: 1px solid #eee5f3;
+  border-radius: 7px;
+}
+
+.payment-option input {
+  accent-color: #76518f;
+}
+
+.checkout-submit {
+  width: 100%;
+  padding: 16px;
+  border: 0;
+  border-radius: 7px;
+  background: #76518f;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.checkout-submit:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.checkout-error {
+  color: #a12b3b;
+  font-size: 13px;
+  margin: 15px 0;
+}
+
+.checkout-result {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 35px;
+  text-align: center;
+  background: white;
+  border: 1px solid #eee5f3;
+  border-radius: 14px;
+}
+
+.checkout-result h2 {
+  font-family: 'Bodoni Moda', serif;
+  font-size: 34px;
+  font-weight: 400;
+  color: #513768;
+}
+
+.checkout-result-icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: #eee5f3;
+  color: #76518f;
+  font-size: 25px;
+}
+
+.checkout-reference {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  margin: 14px 0;
+  background: #faf7f3;
+  border-radius: 7px;
+  overflow-wrap: anywhere;
+}
+
+.checkout-reference span {
+  color: #827b85;
+  font-size: 11px;
+}
+
+.checkout-reference strong {
+  color: #513768;
+  font-size: 14px;
+}
+
+.checkout-pending {
+  padding: 16px;
+  margin: 20px 0;
+  background: #f6f0f8;
+  color: #513768;
+  border-radius: 7px;
+  font-size: 13px;
+}
+
+.checkout-pending p,
+.checkout-demo-disclaimer {
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.checkout-demo-disclaimer {
+  color: #827b85;
+}
+
+@media (max-width: 600px) {
+  .checkout {
+    margin: 20px 0;
+    padding: 20px;
+  }
+
+  .checkout-header h1 {
+    font-size: 32px;
+  }
+
+  .checkout-result {
+    padding: 22px;
+  }
+}
